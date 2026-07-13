@@ -1,0 +1,31 @@
+name: validate-index
+
+# 索引准入 CI：每个 PR 强制校验（content_hash 一致 / semver / sequence 单调 /
+# mirrors https-only 拒内网）。合并到 main 亦复跑。
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: 校验索引分片与内容哈希
+        run: node scripts/validate.mjs
+      - name: 确认 index.json 与分片一致（防手改漂移）
+        run: |
+          node scripts/generate.mjs
+          if ! git diff --quiet -- index.json STATE; then
+            echo "::error::index.json / STATE 与分片不一致，请本地运行 node scripts/generate.mjs 后提交"
+            git --no-pager diff -- index.json STATE
+            exit 1
+          fi

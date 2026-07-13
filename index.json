@@ -1,0 +1,31 @@
+{
+  "indexId": "252c2b9e-c113-42d2-b1b5-3bf8bdb01866",
+  "sequence": 1,
+  "updated": "2026-07-13T08:12:38.908Z",
+  "entries": [
+    {
+      "pluginId": "fluxdown@echo-rewriter",
+      "version": "1.0.0",
+      "sequence": 1,
+      "contentHash": "sha256:9ca5dc459f0f56281731015c3a31a589b2ea0e6283a2e29c79ddf619c5374956",
+      "minAppVersion": "0.2.0",
+      "name": "Echo Rewriter (示例)",
+      "description": "FluxDown 插件系统示例：resolver 惰性解析 + 通知钩子 + 7 种设置控件 + flux.* 桥接 API。",
+      "author": "fluxdown",
+      "homepage": "https://fluxdown.zerx.dev",
+      "mirrors": [
+        "https://raw.githubusercontent.com/zerx-lab/fluxdown-plugin-index/main/dist/echo-rewriter-1.0.0.fxplug",
+        "https://cdn.jsdelivr.net/gh/zerx-lab/fluxdown-plugin-index@main/dist/echo-rewriter-1.0.0.fxplug",
+        "https://github.com/zerx-lab/fluxdown-plugin-index/releases/download/echo-rewriter-1.0.0/echo-rewriter-1.0.0.fxplug"
+      ],
+      "publishTime": "2026-07-13T08:12:38.908Z",
+      "yanked": "none",
+      "tags": [
+        "resolver",
+        "example"
+      ],
+      "sigScheme": "none",
+      "sigstoreBundleRef": ""
+    }
+  ]
+}
