@@ -17,7 +17,15 @@ if (existsSync(pluginsDir)) {
 entries.sort((a, b) => a.sequence - b.sequence);
 const maxSeq = entries.reduce((m, e) => Math.max(m, e.sequence || 0), 0);
 const state = existsSync(`${ROOT}/STATE`) ? JSON.parse(readFileSync(`${ROOT}/STATE`, "utf8")) : { indexId: crypto.randomUUID() };
-const now = new Date().toISOString();
+// `updated` 必须确定性（否则 CI 重跑 generate 后与提交字节不一致，git diff 永远非空、
+// 准入检查恒挂）。取所有分片 publishTime 的最大值——由内容决定、可复现；无分片则回退
+// 纪元零点。语义 = 索引最后一次更新 = 最新插件发布时间。
+const now =
+  entries
+    .map((e) => e.publishTime)
+    .filter((t) => typeof t === "string" && t)
+    .sort()
+    .pop() || "1970-01-01T00:00:00.000Z";
 state.sequence = maxSeq;
 state.updated = now;
 writeFileSync(`${ROOT}/STATE`, JSON.stringify(state, null, 2) + "\n");
