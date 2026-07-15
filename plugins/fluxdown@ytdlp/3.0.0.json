@@ -1,0 +1,31 @@
+{
+  "pluginId": "fluxdown@ytdlp",
+  "version": "3.0.0",
+  "sequence": 2,
+  "contentHash": "sha256:8660e0f22be9f276a13acb6b95ada0831ca3f775671dff483960130b2a1003c6",
+  "minAppVersion": "0.1.60",
+  "name": "yt-dlp 通用视频解析",
+  "description": "经 FluxDown yt-dlp 组件把视频页解析为可下载直链，交回引擎多段并发下载 + 断点续传。仅对一批社区默认、低版权风险的主流平台生效：YouTube / Bilibili / Niconico / Twitch / Vimeo / Dailymotion / SoundCloud / AcFun。画质在下载时经弹框由用户挑选，可为需登录的平台分别配置 Cookie。",
+  "author": "fluxdown",
+  "homepage": "https://fluxdown.zerx.dev",
+  "mirrors": [
+    "https://raw.githubusercontent.com/zerx-lab/fluxdown-plugin-index/main/dist/ytdlp-3.0.0.fxplug",
+    "https://cdn.jsdelivr.net/gh/zerx-lab/fluxdown-plugin-index@main/dist/ytdlp-3.0.0.fxplug",
+    "https://github.com/zerx-lab/fluxdown-plugin-index/releases/download/ytdlp-3.0.0/ytdlp-3.0.0.fxplug"
+  ],
+  "publishTime": "2026-07-15T00:00:00.000Z",
+  "yanked": "none",
+  "tags": [
+    "resolver",
+    "ytdlp",
+    "video",
+    "youtube",
+    "bilibili"
+  ],
+  "permissions": [
+    "ytdlp",
+    "ffmpeg"
+  ],
+  "sigScheme": "none",
+  "sigstoreBundleRef": ""
+}
