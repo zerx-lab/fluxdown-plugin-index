@@ -1,0 +1,29 @@
+{
+  "pluginId": "fluxdown@github-accel",
+  "version": "1.0.0",
+  "sequence": 3,
+  "contentHash": "sha256:c7aa99be4d007fc512e92279ef615e113771f78aaba5fcd388db1d5560401009",
+  "minAppVersion": "0.1.60",
+  "name": "GitHub 加速",
+  "description": "GitHub 文件下载自动加速：解析前对本次要下载的文件在各加速源上并行实测（Range 采样 64 KB），一次探测同时验证可用性与速度，选最快的改写直链；全部不可用则自动回退 GitHub 直连，加速失败绝不阻断下载。内置 jsDelivr CDN（仅仓库内 blob/raw 文件、单文件 ≤ 20 MB）与 FastGit（fastgit.cc，gh-proxy 部署，release 资产 / archive 源码包 / 分支文件全类型）。覆盖 github.com（releases/download、archive、blob、raw）、raw.githubusercontent.com 与 gist.githubusercontent.com。探测到 206 时回填 Range 支持让引擎直接多线程分段；同一链接记住上次选中的源，续传恢复不换源。可在设置中固定加速源或直连，也可按行添加更多 gh-proxy 风格加速源参与测速，无需改代码即可扩展。",
+  "author": "fluxdown",
+  "homepage": "https://github.com/zerx-lab/fluxdown-plugin-github-accel",
+  "mirrors": [
+    "https://raw.githubusercontent.com/zerx-lab/fluxdown-plugin-index/main/dist/github-accel-1.0.0.fxplug",
+    "https://cdn.jsdelivr.net/gh/zerx-lab/fluxdown-plugin-index@main/dist/github-accel-1.0.0.fxplug",
+    "https://github.com/zerx-lab/fluxdown-plugin-index/releases/download/github-accel-1.0.0/github-accel-1.0.0.fxplug"
+  ],
+  "publishTime": "2026-07-17T00:00:00.000Z",
+  "yanked": "none",
+  "tags": [
+    "resolver",
+    "github",
+    "accelerate",
+    "mirror",
+    "jsdelivr",
+    "gh-proxy"
+  ],
+  "permissions": [],
+  "sigScheme": "none",
+  "sigstoreBundleRef": ""
+}
