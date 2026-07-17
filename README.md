@@ -2,7 +2,7 @@
 
 # FluxDown Plugin Index
 
-**A decentralized, content-addressed plugin marketplace for [FluxDown](https://fluxdown.zerx.dev).**
+**The plugin index for [FluxDown](https://fluxdown.zerx.dev) — a content-addressed, Git-versioned catalog of plugins.**
 
 Not a website — a **verifiable data format**. FluxDown discovers, downloads, and verifies plugins directly from this Git repository.
 
@@ -16,15 +16,15 @@ Not a website — a **verifiable data format**. FluxDown discovers, downloads, a
 
 ### What this is
 
-This repository **is** the marketplace. There is no backend, no account, no gatekeeper API. It is a Git-versioned, content-addressed index that any FluxDown client fetches, verifies, and installs from. Anyone may fork it to run an independent, federated market.
+This repository **is** the marketplace: a Git-versioned, content-addressed index that any FluxDown client fetches, verifies, and installs from. There is no backend, no account, and no gatekeeper API. You can fork it to host your own index.
 
 ### Design principles
 
 | Principle | How it is realized |
 |---|---|
-| **Federated, no lock-in** | Anyone can fork this repo into an independent index. Content addressing means a plugin's bytes never depend on trusting the publisher. |
+| **No lock-in** | Anyone can fork this repo into an independent index. Content addressing means a plugin's bytes never depend on trusting the publisher. |
 | **Content-addressed** | `contentHash = sha256(entire .fxplug zip)` is the single source of truth. A client accepts a download from *any* mirror as long as the hash matches — the channel is irrelevant. |
-| **Git as a Merkle DAG** | Rewriting any historical byte cascades into every later commit hash, independently witnessed by every clone and CDN cache. |
+| **Tamper-evident history** | Git commit hashes chain over history, so rewriting any past byte is detectable by every clone and CDN cache. |
 | **Multi-source delivery** | `mirrors[]` lists several HTTPS channels (raw.githubusercontent / jsDelivr CDN / GitHub Release). Any one alive is enough to install. |
 | **Rollback protection** | A global monotonic `sequence`. Clients persist a per-`indexId` high-water mark and reject any index whose sequence regresses. |
 
@@ -100,15 +100,15 @@ FluxDown's `plugin::market::MarketClient`: fetch `index.json` (multi-source fail
 
 ### 这是什么
 
-本仓库**本身**就是市场：无后端、无账号、无准入 API。它是一份 Git 版本化、内容寻址的索引，任何 FluxDown 客户端都从这里发现、校验并安装插件。任何人可 fork 它另立一个联邦式的独立市场。
+本仓库**本身**就是市场：一份 Git 版本化、内容寻址的索引，任何 FluxDown 客户端都从这里发现、校验并安装插件。无后端、无账号、无准入 API。你也可以 fork 它自建索引。
 
 ### 设计要点
 
 | 原则 | 实现方式 |
 |---|---|
-| **联邦式、无锁定** | 任何人可 fork 本仓库另立索引；内容寻址使插件字节不依赖对发布方的信任。 |
+| **无锁定** | 任何人可 fork 本仓库另立索引；内容寻址使插件字节不依赖对发布方的信任。 |
 | **内容寻址** | `contentHash = sha256(整个 .fxplug zip)` 是唯一真相源。客户端从**任一**镜像取回，只要哈希吻合即接受——走哪条通道无所谓。 |
-| **Git = Merkle DAG** | 改写历史任何字节都会级联改变后续每个 commit hash，被每个 clone / CDN 缓存独立见证。 |
+| **可验证历史** | Git commit hash 沿历史链接，改写任何历史字节都会被每个 clone / CDN 缓存察觉。 |
 | **多源分发** | `mirrors[]` 列出多条 HTTPS 通道（raw.githubusercontent / jsDelivr CDN / GitHub Release），任一存活即可安装。 |
 | **防回滚** | 全局 `sequence` 单调递增；客户端持久化 per-`indexId` 高水位，索引 sequence 回退即拒绝。 |
 
