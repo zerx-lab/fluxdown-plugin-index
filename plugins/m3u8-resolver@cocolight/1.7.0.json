@@ -1,0 +1,34 @@
+{
+  "pluginId": "m3u8-resolver@cocolight",
+  "version": "1.7.0",
+  "sequence": 9,
+  "contentHash": "sha256:6e4de51936af440e8f3a5941c26fac871147599d70130cc98a3b2d654c58a503",
+  "minAppVersion": "0.4.8",
+  "name": "M3U8 发现与变体解析器",
+  "description": "把播放页或 .m3u8 链接解析成可下载的 HLS 播放列表：自动选清晰度、补齐防盗链请求头，支持剧集批量、登录站点、订阅追更与反爬站处理。",
+  "author": "cocolight",
+  "homepage": "https://github.com/cocolight/fluxdown-plugin-m3u8",
+  "mirrors": [
+    "https://raw.githubusercontent.com/zerx-lab/fluxdown-plugin-index/main/dist/m3u8-resolver-1.7.0.fxplug",
+    "https://cdn.jsdelivr.net/gh/zerx-lab/fluxdown-plugin-index@main/dist/m3u8-resolver-1.7.0.fxplug",
+    "https://github.com/cocolight/fluxdown-plugin-m3u8/releases/download/v1.7.0/fluxdown-plugin-m3u8_1.7.0.fxplug"
+  ],
+  "publishTime": "2026-10-01T12:47:22.000Z",
+  "yanked": "none",
+  "tags": [
+    "resolver",
+    "hls",
+    "m3u8",
+    "video",
+    "quality",
+    "auth",
+    "subscription"
+  ],
+  "permissions": [
+    "ffmpeg",
+    "ytdlp",
+    "auth"
+  ],
+  "sigScheme": "none",
+  "sigstoreBundleRef": ""
+}
