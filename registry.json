@@ -4,6 +4,11 @@
       "id": "m3u8-resolver@cocolight",
       "repo": "cocolight/fluxdown-plugin-m3u8",
       "tags": ["resolver", "hls", "m3u8", "video", "quality", "adblock"]
+    },
+    {
+      "id": "accountdl@accountdl",
+      "repo": "zerx-lab/fluxdown-plugin-accountdl",
+      "tags": ["resolver", "netdisk", "bilibili", "pixiv", "cnki", "cookie"]
     }
   ]
 }
