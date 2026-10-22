@@ -2,12 +2,32 @@
 // Mirrors FluxDown native/engine/src/plugin/{install,manifest}.rs: a package admitted
 // here must install on the client. Listing rules may be stricter (strict three-part
 // version, entry/icon files must exist), never looser.
+import { isIP } from "node:net";
 import { inflateRawSync } from "node:zlib";
 
 export const MAX_ENTRIES = 200;
 export const MAX_TOTAL_UNCOMPRESSED = 50 * 1024 * 1024;
 export const VALID_EVENTS = ["onStart", "onError", "onDone", "onMetaProbed", "onCancel"];
-export const VALID_PERMISSIONS = ["ffmpeg", "ytdlp", "auth"];
+export const VALID_PERMISSIONS = ["ffmpeg", "ytdlp", "auth", "tasks", "browserRules", "desktop", "background",
+  "intercept", "pageScripts"];
+export const STAGE_NAMES = ["prepare", "probed", "refresh", "selectVariant", "selectPeriod", "segments",
+  "liveSegments", "finalize", "failed"];
+const VIEW_LOCATIONS = ["activity", "settings", "taskDetail", "window"];
+const RUN_AT = ["document_start", "document_end", "document_idle"];
+const WORLDS = ["isolated", "main"];
+const WINDOW_SIZE_MIN = 240;
+const WINDOW_SIZE_MAX = 4096;
+const NETWORK_HOSTS_MAX = 64;
+const VIEWS_MAX = 16;
+const COMMANDS_MAX = 32;
+const TITLE_MAX_CHARS = 40;
+const SNIFF_PACK_MAX_BYTES = 256 * 1024;
+const SNIFF_PACK_MAX_RULES = 500;
+const PAGE_SCRIPTS_MAX = 16;
+const PAGE_SCRIPT_MATCHES_MAX = 32;
+const PAGE_SCRIPT_JS_MAX = 8;
+const PAGE_SCRIPT_FILE_MAX_BYTES = 256 * 1024;
+const PAGE_SCRIPT_MAX_BYTES = 384 * 1024;
 const RSS_PROVIDER_ID = "rss";
 const IDENTITY = /^[a-z0-9_-]+@[a-z0-9_-]+$/;
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
@@ -205,12 +225,253 @@ function checkSetting(errors, field, seen) {
   }
 }
 
+const chars = (value) => [...value].length;
+const hasExtension = (path, exts) => exts.some((ext) => path.toLowerCase().endsWith(ext));
+const contributionId = (id) => typeof id === "string" && /^[a-z][a-z0-9-]{0,31}$/.test(id);
+const pageScriptId = (id) => typeof id === "string" && /^[a-z0-9][a-z0-9_-]{0,31}$/.test(id);
+const validTitle = (title) => typeof title === "string" && chars(title) >= 1 && chars(title) <= TITLE_MAX_CHARS;
+
+/** Mirrors engine `is_valid_match_pattern`. */
+function isValidMatchPattern(pattern) {
+  if (typeof pattern !== "string") return false;
+  const split = pattern.indexOf("://");
+  if (split < 0) return false;
+  const scheme = pattern.slice(0, split);
+  const rest = pattern.slice(split + 3);
+  if (!["http", "https", "*"].includes(scheme)) return false;
+  const slash = rest.indexOf("/");
+  if (slash < 0) return false;
+  const host = rest.slice(0, slash);
+  if (/[\u0000-\u001f\u007f-\u009f\s]/.test(rest.slice(slash))) return false;
+  const domain = host.startsWith("*.") ? host.slice(2) : host;
+  return domain !== "" && domain.includes(".") && /^[a-z0-9.-]+$/.test(domain)
+    && !/^[.-]/.test(domain) && !/[.-]$/.test(domain) && !domain.includes("..");
+}
+
+/** Mirrors engine `is_valid_network_host`. */
+function isValidNetworkHost(host) {
+  if (typeof host !== "string" || !host || Buffer.byteLength(host) > 253) return false;
+  if (!host.includes("%") && isIP(host)) return host === host.toLowerCase();
+  return host.split(".").every((label) => label !== "" && label.length <= 63 && /^[a-z0-9-]+$/.test(label)
+    && !label.startsWith("-") && !label.endsWith("-"));
+}
+
+function checkInterceptors(errors, interceptors, permissions, files) {
+  if (!isObject(interceptors)) return errors.push("interceptors 须为对象");
+  unknownKeys(errors, "interceptors", interceptors, ["entry", "stages", "match", "timeoutMs", "onFailure"]);
+  checkEntry(errors, "interceptors entry", interceptors.entry, files);
+  if (!Array.isArray(interceptors.stages) || !interceptors.stages.length) errors.push("interceptors.stages 不可为空");
+  else {
+    const seen = new Set();
+    for (const stage of interceptors.stages) {
+      if (!STAGE_NAMES.includes(stage)) errors.push(`未知拦截阶段 '${stage}'，合法：${STAGE_NAMES.join(", ")}`);
+      else if (seen.has(stage)) errors.push(`interceptors.stages 重复：'${stage}'`);
+      seen.add(stage);
+    }
+  }
+  if (!isObject(interceptors.match)) errors.push("interceptors match 须为对象");
+  else {
+    unknownKeys(errors, "interceptors match", interceptors.match, ["urls"]);
+    if (!Array.isArray(interceptors.match.urls) || !interceptors.match.urls.length
+      || !interceptors.match.urls.every((u) => typeof u === "string")) errors.push("interceptors match.urls 不可为空");
+  }
+  if (!positiveTimeout(interceptors.timeoutMs)) errors.push("interceptors timeoutMs 须为正整数");
+  if (interceptors.onFailure != null && !["continue", "fail"].includes(interceptors.onFailure)) {
+    errors.push(`interceptors onFailure '${interceptors.onFailure}' 非法，合法：continue, fail`);
+  }
+  if (!permissions.includes("intercept")) errors.push("声明 interceptors 时 permissions 必须包含 intercept");
+}
+
+function checkMain(errors, main, permissions, files) {
+  if (!isObject(main)) return errors.push("main 须为对象");
+  unknownKeys(errors, "main", main, ["entry", "events", "background"]);
+  checkEntry(errors, "main entry", main.entry, files);
+  if (typeof main.entry === "string" && !hasExtension(main.entry, [".js"])) errors.push(`main entry '${main.entry}' 扩展名须为 .js`);
+  if (main.events != null) {
+    if (!Array.isArray(main.events)) errors.push("main.events 须为数组");
+    else for (const event of main.events) {
+      if (!VALID_EVENTS.includes(event)) errors.push(`main.events 未知事件 '${event}'，合法：${VALID_EVENTS.join(", ")}`);
+    }
+  }
+  if (main.background != null && typeof main.background !== "boolean") errors.push("main.background 须为布尔");
+  if (main.background === true && !permissions.includes("background")) {
+    errors.push("main.background 为 true 时 permissions 必须包含 background");
+  }
+}
+
+function checkDesktop(errors, view, desktop, permissions, files) {
+  const where = `view '${view.id}'`;
+  if (!isObject(desktop)) return errors.push(`${where} desktop 须为对象`);
+  unknownKeys(errors, `${where} desktop`, desktop, ["entry", "networkHosts", "width", "height"]);
+  checkEntry(errors, `${where} desktop entry`, desktop.entry, files);
+  if (typeof desktop.entry === "string" && !hasExtension(desktop.entry, [".js", ".mjs"])) {
+    errors.push(`${where} desktop entry '${desktop.entry}' 扩展名须为 .js 或 .mjs`);
+  }
+  if (!permissions.includes("desktop")) errors.push(`${where} 声明 desktop 时 permissions 必须包含 desktop`);
+  for (const name of ["width", "height"]) {
+    const size = desktop[name];
+    if (size == null) continue;
+    if (view.location !== "window") errors.push(`${where} 的 ${name} 仅允许用于 location 为 window 的 view`);
+    else if (typeof size !== "number" || !Number.isFinite(size) || size < WINDOW_SIZE_MIN || size > WINDOW_SIZE_MAX) {
+      errors.push(`${where} ${name} 须为 [${WINDOW_SIZE_MIN}, ${WINDOW_SIZE_MAX}] 内的有限数`);
+    }
+  }
+  const hosts = desktop.networkHosts ?? [];
+  if (!Array.isArray(hosts)) return errors.push(`${where} networkHosts 须为数组`);
+  if (hosts.length > NETWORK_HOSTS_MAX) errors.push(`${where} networkHosts 至多 ${NETWORK_HOSTS_MAX} 项`);
+  const seen = new Set();
+  for (const host of hosts) {
+    if (!isValidNetworkHost(host)) errors.push(`${where} networkHosts '${host}' 非法`);
+    else if (seen.has(host)) errors.push(`${where} networkHosts '${host}' 重复`);
+    seen.add(host);
+  }
+}
+
+function checkPageScripts(errors, scripts, permissions, files) {
+  if (!scripts.length) return;
+  if (scripts.length > PAGE_SCRIPTS_MAX) errors.push(`contributes.pageScripts 至多 ${PAGE_SCRIPTS_MAX} 项`);
+  if (!permissions.includes("pageScripts")) errors.push("声明 pageScripts 时 permissions 必须包含 pageScripts");
+  const seen = new Set();
+  for (const script of scripts) {
+    if (!isObject(script)) {
+      errors.push("pageScript 须为对象");
+      continue;
+    }
+    const where = `pageScript '${script.id}'`;
+    unknownKeys(errors, where, script, ["id", "title", "matches", "excludeMatches", "js", "runAt", "world", "allFrames"]);
+    if (!pageScriptId(script.id)) errors.push(`pageScript id '${script.id}' 非法：须匹配 ^[a-z0-9][a-z0-9_-]{0,31}$`);
+    else if (seen.has(script.id)) errors.push(`${where} 重复`);
+    seen.add(script.id);
+    if (!validTitle(script.title)) errors.push(`${where} title 须为 1–${TITLE_MAX_CHARS} 个字符`);
+    const matches = script.matches;
+    if (!Array.isArray(matches) || matches.length < 1 || matches.length > PAGE_SCRIPT_MATCHES_MAX) {
+      errors.push(`${where} matches 须为 1–${PAGE_SCRIPT_MATCHES_MAX} 项`);
+    }
+    const excludes = script.excludeMatches ?? [];
+    if (!Array.isArray(excludes)) errors.push(`${where} excludeMatches 须为数组`);
+    else if (excludes.length > PAGE_SCRIPT_MATCHES_MAX) errors.push(`${where} excludeMatches 至多 ${PAGE_SCRIPT_MATCHES_MAX} 项`);
+    for (const [field, list] of [["matches", matches], ["excludeMatches", excludes]]) {
+      if (Array.isArray(list)) for (const pattern of list) {
+        if (!isValidMatchPattern(pattern)) errors.push(`${where} ${field} '${pattern}' 非法 match pattern`);
+      }
+    }
+    if (script.runAt != null && !RUN_AT.includes(script.runAt)) errors.push(`${where} runAt '${script.runAt}' 非法`);
+    if (script.world != null && !WORLDS.includes(script.world)) errors.push(`${where} world '${script.world}' 非法`);
+    if (script.allFrames != null && typeof script.allFrames !== "boolean") errors.push(`${where} allFrames 须为布尔`);
+    const js = script.js;
+    if (!Array.isArray(js) || js.length < 1 || js.length > PAGE_SCRIPT_JS_MAX) {
+      errors.push(`${where} js 须为 1–${PAGE_SCRIPT_JS_MAX} 项`);
+      continue;
+    }
+    const used = new Set();
+    let code = 0;
+    for (const [index, file] of js.entries()) {
+      if (!isSafeRelativePath(file)) {
+        errors.push(`${where} js 路径 '${file}' 非法`);
+        continue;
+      }
+      if (!hasExtension(file, [".js"])) errors.push(`${where} js '${file}' 扩展名须为 .js`);
+      if (used.has(file)) errors.push(`${where} js '${file}' 重复`);
+      used.add(file);
+      const content = files.get(file.replaceAll("\\", "/"));
+      if (!content) {
+        errors.push(`${where} js 指向的 ${file} 不在包内`);
+        continue;
+      }
+      if (content.length > PAGE_SCRIPT_FILE_MAX_BYTES) errors.push(`${where} 文件 '${file}' 超过 ${PAGE_SCRIPT_FILE_MAX_BYTES} 字节`);
+      try {
+        new TextDecoder("utf-8", { fatal: true }).decode(content);
+      } catch {
+        errors.push(`${where} 文件 '${file}' 不是合法 UTF-8`);
+      }
+      code += content.length + (index > 0 ? 3 : 0);
+    }
+    if (code > PAGE_SCRIPT_MAX_BYTES) errors.push(`${where} 拼接后超过 ${PAGE_SCRIPT_MAX_BYTES} 字节`);
+  }
+}
+
+function checkSniffRules(errors, rules, permissions, files) {
+  if (typeof rules !== "string" || !isSafeRelativePath(rules)) return errors.push(`sniffRules 路径 '${rules}' 非法`);
+  if (!hasExtension(rules, [".json"])) errors.push(`sniffRules '${rules}' 扩展名须为 .json`);
+  if (!permissions.includes("browserRules")) errors.push("声明 sniffRules 时 permissions 必须包含 browserRules");
+  const content = files.get(rules.replaceAll("\\", "/"));
+  if (!content) return errors.push(`sniffRules 指向的 ${rules} 不在包内`);
+  if (content.length > SNIFF_PACK_MAX_BYTES) return errors.push(`sniffRules 文件超过 ${SNIFF_PACK_MAX_BYTES} 字节`);
+  let pack;
+  try {
+    pack = JSON.parse(content.toString("utf8"));
+  } catch (err) {
+    return errors.push(`sniffRules JSON 解析失败: ${err.message}`);
+  }
+  if (pack?.format !== "fluxdown-sniff-pack") errors.push("sniffRules format 须为 fluxdown-sniff-pack");
+  else if (!Array.isArray(pack.rules)) errors.push("sniffRules rules 须为数组");
+  else if (pack.rules.length > SNIFF_PACK_MAX_RULES) errors.push(`sniffRules 至多 ${SNIFF_PACK_MAX_RULES} 条规则`);
+}
+
+function checkContributes(errors, manifest, permissions, files) {
+  const contributes = manifest.contributes;
+  if (!isObject(contributes)) return errors.push("contributes 须为对象");
+  unknownKeys(errors, "contributes", contributes, ["views", "commands", "sniffRules", "pageScripts"]);
+  const views = contributes.views ?? [];
+  const commands = contributes.commands ?? [];
+  const pageScripts = contributes.pageScripts ?? [];
+  if (!Array.isArray(views)) errors.push("contributes.views 须为数组");
+  if (!Array.isArray(commands)) errors.push("contributes.commands 须为数组");
+  if (!Array.isArray(pageScripts)) errors.push("contributes.pageScripts 须为数组");
+  if (!Array.isArray(views) || !Array.isArray(commands) || !Array.isArray(pageScripts)) return;
+
+  if (views.length > VIEWS_MAX) errors.push(`contributes.views 至多 ${VIEWS_MAX} 项`);
+  const seenViews = new Set();
+  let settingsViews = 0;
+  for (const view of views) {
+    if (!isObject(view)) {
+      errors.push("view 须为对象");
+      continue;
+    }
+    unknownKeys(errors, `view '${view.id}'`, view, ["id", "title", "location", "desktop", "portable"]);
+    if (!contributionId(view.id)) errors.push(`view id '${view.id}' 非法：须匹配 ^[a-z][a-z0-9-]{0,31}$`);
+    else if (seenViews.has(view.id)) errors.push(`view id '${view.id}' 重复`);
+    seenViews.add(view.id);
+    if (!validTitle(view.title)) errors.push(`view '${view.id}' title 须为 1–${TITLE_MAX_CHARS} 个字符`);
+    if (!VIEW_LOCATIONS.includes(view.location)) errors.push(`view '${view.id}' location '${view.location}' 非法`);
+    if (view.location === "settings" && ++settingsViews > 1) errors.push("location 为 settings 的 view 至多 1 个");
+    if (view.portable != null && typeof view.portable !== "boolean") errors.push(`view '${view.id}' portable 须为布尔`);
+    if (view.desktop == null) {
+      if (view.portable === true) errors.push(`view '${view.id}' 的 portable 仅允许与 desktop 同时声明`);
+    } else checkDesktop(errors, view, view.desktop, permissions, files);
+    if ((view.desktop == null || view.portable === true) && manifest.main == null) {
+      errors.push(`view '${view.id}' 有可移植实现，必须声明 main`);
+    }
+  }
+
+  if (commands.length > COMMANDS_MAX) errors.push(`contributes.commands 至多 ${COMMANDS_MAX} 项`);
+  const seenCommands = new Set();
+  for (const command of commands) {
+    if (!isObject(command)) {
+      errors.push("command 须为对象");
+      continue;
+    }
+    unknownKeys(errors, `command '${command.id}'`, command, ["id", "title", "palette", "taskMenu"]);
+    if (!contributionId(command.id)) errors.push(`command id '${command.id}' 非法：须匹配 ^[a-z][a-z0-9-]{0,31}$`);
+    else if (seenCommands.has(command.id)) errors.push(`command id '${command.id}' 重复`);
+    seenCommands.add(command.id);
+    if (!validTitle(command.title)) errors.push(`command '${command.id}' title 须为 1–${TITLE_MAX_CHARS} 个字符`);
+    for (const flag of ["palette", "taskMenu"]) {
+      if (command[flag] != null && typeof command[flag] !== "boolean") errors.push(`command '${command.id}' ${flag} 须为布尔`);
+    }
+  }
+  if (commands.length && manifest.main == null) errors.push("声明 commands 时必须声明 main");
+  if (contributes.sniffRules != null) checkSniffRules(errors, contributes.sniffRules, permissions, files);
+  checkPageScripts(errors, pageScripts, permissions, files);
+}
+
 /** Validates manifest.json against the engine schema; returns a list of errors. */
 export function validateManifest(manifest, files) {
   const errors = [];
   if (!isObject(manifest)) return ["manifest.json 须为 JSON 对象"];
   unknownKeys(errors, "manifest", manifest, ["identity", "name", "version", "description", "homepage", "icon",
-    "minAppVersion", "resolvers", "subscriptions", "hooks", "auth", "settings", "permissions"]);
+    "minAppVersion", "resolvers", "subscriptions", "hooks", "interceptors", "auth", "main", "contributes",
+    "settings", "permissions"]);
   if (!IDENTITY.test(manifest.identity ?? "")) errors.push(`identity '${manifest.identity}' 非法：须匹配 ${IDENTITY}`);
   if (!nonEmptyString(manifest.name)) errors.push("name 不可为空");
   if (!isVersion(manifest.version)) errors.push(`version '${manifest.version}' 须为三段 MAJOR.MINOR.PATCH（市场不收预发布/v 前缀）`);
@@ -286,6 +547,11 @@ export function validateManifest(manifest, files) {
     }
   }
 
+  const granted = Array.isArray(permissions) ? permissions : [];
+  if (manifest.interceptors != null) checkInterceptors(errors, manifest.interceptors, granted, files);
+  if (manifest.main != null) checkMain(errors, manifest.main, granted, files);
+  if (manifest.contributes != null) checkContributes(errors, manifest, granted, files);
+
   const settings = manifest.settings ?? [];
   if (!Array.isArray(settings)) errors.push("settings 须为数组");
   else {
@@ -295,10 +561,13 @@ export function validateManifest(manifest, files) {
   return errors;
 }
 
-/** URL patterns the plugin can intercept (resolver + hooks); reviewers and comments show them. */
+/** URL patterns the plugin can intercept (resolver + hooks + interceptors + page scripts); reviewers and comments show them. */
 export function matchPatterns(manifest) {
+  const scripts = isObject(manifest.contributes) && Array.isArray(manifest.contributes.pageScripts)
+    ? manifest.contributes.pageScripts : [];
   return [...new Set([...(manifest.resolvers ?? []).flatMap((r) => r?.match?.urls ?? []),
-    ...(manifest.hooks?.match?.urls ?? [])])].sort();
+    ...(manifest.hooks?.match?.urls ?? []), ...(manifest.interceptors?.match?.urls ?? []),
+    ...scripts.flatMap((s) => [...(s?.matches ?? [])])])].sort();
 }
 
 /** Parses + validates a .fxplug; throws with every admission error joined. */

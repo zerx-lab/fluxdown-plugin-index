@@ -78,7 +78,7 @@ scripts/check-mirrors.mjs            Online full-GET/hash validation of every mi
 | Release | Latest Release of the registered repo, exactly one `.fxplug` asset on that repo's `releases/download` URL |
 | Bytes | ≤ 10 MiB; sha256 equals GitHub's asset digest when present |
 | Zip | ≤ 200 entries, ≤ 50 MiB unpacked, no `..`/absolute/backslash paths, no symlinks or encrypted entries, CRC verified; `manifest.json` at root or in one wrapper folder |
-| Manifest | Same schema as the client (unknown keys, identity, settings widget×type matrix, events, permissions `ffmpeg`/`ytdlp`/`auth`, `auth` requires the `auth` permission); every `entry`/`icon` file exists |
+| Manifest | Same schema as the client (unknown keys, identity, settings widget×type matrix, events, permissions `ffmpeg`/`ytdlp`/`auth`/`tasks`/`browserRules`/`desktop`/`background`/`intercept`/`pageScripts`, `interceptors`/`main`/`contributes` rules, `auth`/`intercept`/`pageScripts`/`browserRules`/`desktop` blocks require their permission); every `entry`/`icon` file exists |
 | Identity | Manifest `identity` equals the registered `id` |
 | Version | Strictly greater than every published version; identical bytes only add the release as a mirror of the existing version |
 | Immutability | A staged release asset whose digest changes is reported; the published version keeps its bytes |
@@ -120,7 +120,7 @@ A `.fxplug` is a plain zip of the plugin directory with `manifest.json` at the r
 | `hooks` | `{ entry, events, match? }`; `events` ⊆ `onStart` / `onError` / `onDone` / `onMetaProbed` / `onCancel`. |
 | `auth` | `{ entry, timeoutMs? }` platform login; requires the `auth` permission. |
 | `settings[]` | Declarative settings rendered on desktop and web (`text` / `password` / `textarea` / `folder` / `select` → `string`; `toggle` → `boolean`; `number` → `number`). |
-| `permissions[]` | `ffmpeg`, `ytdlp`, `auth`. Unknown values reject the manifest — pair a new permission with a `minAppVersion` bump. |
+| `permissions[]` | `ffmpeg`, `ytdlp`, `auth`, `tasks`, `browserRules`, `desktop`, `background`, `intercept`, `pageScripts`. Unknown values reject the manifest — pair a new permission with a `minAppVersion` bump. |
 
 Full API reference: <https://fluxdown.com/docs/en/plugins/api-reference/>.
 
@@ -211,7 +211,7 @@ scripts/check-mirrors.mjs            对每个镜像完整 GET 并核验哈希
 | Release | 登记仓库的 Latest Release，恰好一个 `.fxplug` 附件，地址属于该仓库的 `releases/download` |
 | 字节 | ≤ 10 MiB；GitHub 提供附件 digest 时 sha256 必须一致 |
 | Zip | ≤ 200 个条目、解压 ≤ 50 MiB；禁 `..` / 绝对路径 / 反斜杠、符号链接、加密条目；校验 CRC；`manifest.json` 在根目录或唯一包裹目录内 |
-| Manifest | 与客户端同一 schema（未知字段、identity、设置 widget×type 矩阵、事件、权限 `ffmpeg` / `ytdlp` / `auth`，`auth` 入口须有 `auth` 权限）；所有 `entry` / `icon` 文件必须存在 |
+| Manifest | 与客户端同一 schema（未知字段、identity、设置 widget×type 矩阵、事件、权限 `ffmpeg` / `ytdlp` / `auth` / `tasks` / `browserRules` / `desktop` / `background` / `intercept` / `pageScripts`，`interceptors` / `main` / `contributes` 规则，`auth` / `intercept` / `pageScripts` / `browserRules` / `desktop` 声明须带对应权限）；所有 `entry` / `icon` / `main` / 页面脚本 / 嗅探规则文件必须存在 |
 | 身份 | manifest `identity` 等于登记的 `id` |
 | 版本 | 严格高于全部已发布版本；字节完全相同则只把 Release 追加为该版本的镜像 |
 | 不可变 | 已收录的 Release 附件 digest 变化会被上报，已发布版本字节不变 |
@@ -253,7 +253,7 @@ scripts/check-mirrors.mjs            对每个镜像完整 GET 并核验哈希
 | `hooks` | `{ entry, events, match? }`；`events` ⊆ `onStart` / `onError` / `onDone` / `onMetaProbed` / `onCancel`。 |
 | `auth` | `{ entry, timeoutMs? }` 平台登录入口；须声明 `auth` 权限。 |
 | `settings[]` | 声明式设置，桌面与 Web 自动渲染（`text` / `password` / `textarea` / `folder` / `select` → `string`；`toggle` → `boolean`；`number` → `number`）。 |
-| `permissions[]` | `ffmpeg`、`ytdlp`、`auth`。未知值拒绝整份 manifest —— 新增权限时一并抬高 `minAppVersion`。 |
+| `permissions[]` | `ffmpeg`、`ytdlp`、`auth`、`tasks`、`browserRules`、`desktop`、`background`、`intercept`、`pageScripts`。未知值拒绝整份 manifest —— 新增权限时一并抬高 `minAppVersion`。 |
 
 完整 API 参考：<https://fluxdown.com/docs/zh/plugins/api-reference/>。
 

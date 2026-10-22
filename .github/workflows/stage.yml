@@ -40,7 +40,7 @@ jobs:
         run: node scripts/stage.mjs --results "$RUNNER_TEMP/stage-results.json"
       - name: Offline admission against the pre-stage baseline
         run: |
-          node --test scripts/index.test.mjs scripts/stage.test.mjs
+          node --test scripts/index.test.mjs scripts/stage.test.mjs scripts/manifest-cases.test.mjs
           node scripts/validate.mjs --base "$RUNNER_TEMP/baseline"
       - name: Publish
         env:

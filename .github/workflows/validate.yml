@@ -43,7 +43,7 @@ jobs:
         with:
           node-version: "20"
       - name: Deterministic publication behavior tests (no network)
-        run: node --test scripts/index.test.mjs scripts/stage.test.mjs
+        run: node --test scripts/index.test.mjs scripts/stage.test.mjs scripts/manifest-cases.test.mjs
       - name: Offline content / flatten / append-only / high-water admission
         run: node scripts/validate.mjs --base .baseline
 
