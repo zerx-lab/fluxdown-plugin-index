@@ -9,6 +9,11 @@
       "id": "accountdl@accountdl",
       "repo": "zerx-lab/fluxdown-plugin-accountdl",
       "tags": ["resolver", "netdisk", "bilibili", "pixiv", "cnki", "cookie"]
+    },
+    {
+      "id": "musicdl@musicdl",
+      "repo": "zerx-lab/fluxdown-plugin-musicdl",
+      "tags": ["resolver", "music", "audio", "lyrics"]
     }
   ]
 }
