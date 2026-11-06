@@ -27,6 +27,11 @@
       "repo": "gulanthys/fluxdown-anime-archive",
       "formerIds": ["fluxdown@anime-archive"],
       "tags": ["archive", "anime", "classification"]
+    },
+    {
+      "id": "community@m3u8-pro",
+      "repo": "Ouyangyouzi/fluxdown-m3u8-pro",
+      "tags": ["resolver", "hls", "m3u8", "video", "filename", "quality"]
     }
   ]
 }
