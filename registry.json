@@ -27,6 +27,11 @@
       "repo": "gulanthys/fluxdown-anime-archive",
       "formerIds": ["fluxdown@anime-archive"],
       "tags": ["archive", "anime", "classification"]
+    },
+    {
+      "id": "hoohcool@hf-accel",
+      "repo": "hoohcool/fluxdown-plugin-hf-accel",
+      "tags": ["resolver", "huggingface", "mirror", "download", "accelerator"]
     }
   ]
 }
