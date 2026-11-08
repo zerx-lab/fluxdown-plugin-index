@@ -27,6 +27,11 @@
       "repo": "gulanthys/fluxdown-anime-archive",
       "formerIds": ["fluxdown@anime-archive"],
       "tags": ["archive", "anime", "classification"]
+    },
+    {
+      "id": "codex@pikpak-share",
+      "repo": "Daodedfb/fluxdown-pikpak-share",
+      "tags": ["resolver", "netdisk", "pikpak", "share", "video", "batch"]
     }
   ]
 }
