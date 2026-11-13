@@ -32,6 +32,11 @@
       "id": "hoohcool@hf-accel",
       "repo": "hoohcool/fluxdown-plugin-hf-accel",
       "tags": ["resolver", "huggingface", "mirror", "download", "accelerator"]
+    },
+    {
+      "id": "community@m3u8-pro",
+      "repo": "Ouyangyouzi/fluxdown-m3u8-pro",
+      "tags": ["resolver", "hls", "m3u8", "video", "filename", "quality"]
     }
   ]
 }
