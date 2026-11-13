@@ -1,7 +1,7 @@
 {
   "indexId": "252c2b9e-c113-42d2-b1b5-3bf8bdb01866",
-  "sequence": 24,
-  "updated": "2026-11-06T03:06:49.000Z",
+  "sequence": 25,
+  "updated": "2026-11-06T08:43:03.000Z",
   "entries": [
     {
       "pluginId": "fluxdown@ytdlp",
@@ -607,6 +607,34 @@
         "mirror",
         "download",
         "accelerator"
+      ],
+      "permissions": [],
+      "networkHosts": [],
+      "sigScheme": "none",
+      "sigstoreBundleRef": ""
+    },
+    {
+      "pluginId": "community@m3u8-pro",
+      "version": "1.0.0",
+      "sequence": 25,
+      "contentHash": "sha256:c075b5e6919a8369c6056f05832ef2251b8cf020856b119f61f298b55a19d5c4",
+      "minAppVersion": "0.6.0",
+      "name": "M3U8 超级下载器 Pro",
+      "description": "把 M3U8 主播放列表交给 FluxDown 引擎：列出全部清晰度、按偏好预选、用网页标题命名、自动补 Referer/UA，并识别独立音轨、AES-128 与直播列表。",
+      "author": "Ouyangyouzi",
+      "homepage": "https://github.com/Ouyangyouzi/fluxdown-m3u8-pro",
+      "mirrors": [
+        "https://github.com/Ouyangyouzi/fluxdown-m3u8-pro/releases/download/v1.0.0/community-m3u8-pro-1.0.0.fxplug"
+      ],
+      "publishTime": "2026-11-06T08:43:03.000Z",
+      "yanked": "none",
+      "tags": [
+        "resolver",
+        "hls",
+        "m3u8",
+        "video",
+        "filename",
+        "quality"
       ],
       "permissions": [],
       "networkHosts": [],
