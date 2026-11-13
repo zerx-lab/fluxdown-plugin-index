@@ -1,7 +1,7 @@
 {
   "indexId": "252c2b9e-c113-42d2-b1b5-3bf8bdb01866",
-  "sequence": 23,
-  "updated": "2026-11-04T12:04:05.000Z",
+  "sequence": 24,
+  "updated": "2026-11-06T03:06:49.000Z",
   "entries": [
     {
       "pluginId": "fluxdown@ytdlp",
@@ -582,6 +582,33 @@
       "permissions": [
         "archive"
       ],
+      "networkHosts": [],
+      "sigScheme": "none",
+      "sigstoreBundleRef": ""
+    },
+    {
+      "pluginId": "hoohcool@hf-accel",
+      "version": "1.0.0",
+      "sequence": 24,
+      "contentHash": "sha256:f14d6163d199a3193a1ce1949eecf85dea91a7278da646764c733b9480a80ea3",
+      "minAppVersion": "0.1.60",
+      "name": "HuggingFace 加速",
+      "description": "HuggingFace 文件下载加速：把 huggingface.co 的 /resolve/ 直链改写到镜像 hf-mirror.com（path 与 query 原样保留，覆盖 models / datasets / spaces）。改写前对本次要下载的文件在各镜像上并行实测（Range 采样 64 KB）确认可用性，探测到 206 时回填 Range 支持让引擎直接多线程分段；全部镜像不可用则放行 HF 直连，加速失败绝不阻断下载。任务自带 Cookie / Authorization 时自动放行，凭据绝不发往第三方镜像。可在设置中固定镜像或直连，也可按行添加镜像前缀参与探测。大文件经镜像 302 至 xethub CDN 直取，小文件由镜像缓存直出。",
+      "author": "hoohcool",
+      "homepage": "https://github.com/hoohcool/fluxdown-plugin-hf-accel",
+      "mirrors": [
+        "https://github.com/hoohcool/fluxdown-plugin-hf-accel/releases/download/v1.0.0/hf-accel-1.0.0.fxplug"
+      ],
+      "publishTime": "2026-11-06T03:06:49.000Z",
+      "yanked": "none",
+      "tags": [
+        "resolver",
+        "huggingface",
+        "mirror",
+        "download",
+        "accelerator"
+      ],
+      "permissions": [],
       "networkHosts": [],
       "sigScheme": "none",
       "sigstoreBundleRef": ""
