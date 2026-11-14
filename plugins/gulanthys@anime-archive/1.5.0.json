@@ -1,0 +1,27 @@
+{
+  "pluginId": "gulanthys@anime-archive",
+  "version": "1.5.0",
+  "sequence": 26,
+  "contentHash": "sha256:af3d7a4029c573f83efae564abe9952e0302b5585edded82c799aa0480e957c0",
+  "minAppVersion": "0.6.5",
+  "name": "FluxDown Classification",
+  "description": "Requests stable built-in save categories using host-observed file content only; preserves downloaded filenames.",
+  "author": "gulanthys",
+  "homepage": "https://github.com/gulanthys/fluxdown-anime-archive",
+  "mirrors": [
+    "https://github.com/gulanthys/fluxdown-anime-archive/releases/download/v1.5.0/anime-archive-1.5.0.fxplug"
+  ],
+  "publishTime": "2026-11-14T03:25:52.000Z",
+  "yanked": "none",
+  "tags": [
+    "archive",
+    "anime",
+    "classification"
+  ],
+  "permissions": [
+    "archive"
+  ],
+  "networkHosts": [],
+  "sigScheme": "none",
+  "sigstoreBundleRef": ""
+}
