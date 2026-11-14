@@ -6,6 +6,8 @@ import { generatedDocuments, validateCatalog } from "./index-lib.mjs";
 import { crc32, readPackage, inspectPackage } from "./package-lib.mjs";
 import { stagePlugin, stageAll, syncStageIssues, stageFailBody, TransientError } from "./stage-lib.mjs";
 import { checkRegistry } from "./check-registry.mjs";
+import { checkMirrors } from "./check-mirrors.mjs";
+import { validatePublicationLocalizations } from "./publication-lib.mjs";
 
 const ID = "252c2b9e-c113-42d2-b1b5-3bf8bdb01866";
 const REPO = "alice/fluxdown-plugin-demo";
@@ -139,6 +141,81 @@ test("identical bytes already published elsewhere only gain the author's release
   assert.equal(entry.sequence, 3);
   assert.equal(entry.mirrors.at(-1), releaseUrl("v1.1.0"));
   assert.equal(catalog.shards.size, 1);
+});
+
+const legacySetting = { key: "quality", title: "Quality", type: "string", widget: "select",
+  description: "Choose quality", options: [{ value: "best", label: "Best" }],
+  helperScript: "copy(document.cookie)", helperLabel: "Copy script" };
+const localizedSetting = () => ({
+  ...legacySetting,
+  localizations: Object.fromEntries(["en", "zh"].map((locale) => [locale, {
+    title: `${locale} quality`, description: `${locale} description`,
+    helperLabel: `${locale} copy`, options: { best: `${locale} best` },
+  }])),
+});
+
+test("market publication requires complete baseline text, not just a localization declaration", () => {
+  assert.deepEqual(validatePublicationLocalizations(manifest()), []);
+  const valid = localizedSetting();
+  assert.deepEqual(validatePublicationLocalizations(manifest({ settings: [valid] })), []);
+  for (const locale of ["en", "zh"]) {
+    for (const key of ["title", "description", "helperLabel", "options"]) {
+      const field = localizedSetting();
+      field.localizations[locale][key] = key === "options" ? { best: " \n" } : " \n";
+      const errors = validatePublicationLocalizations(manifest({ settings: [field] }));
+      assert.ok(errors.some((error) => error.includes(`localizations.${locale}.${key}`)), errors.join("\n"));
+    }
+  }
+  const empty = { ...legacySetting, localizations: { en: {}, zh: {} } };
+  assert.equal(validatePublicationLocalizations(manifest({ settings: [empty] })).length, 8);
+  const noCustomHelp = localizedSetting();
+  delete noCustomHelp.description;
+  delete noCustomHelp.helperLabel;
+  for (const text of Object.values(noCustomHelp.localizations)) {
+    delete text.description;
+    delete text.helperLabel;
+  }
+  assert.deepEqual(validatePublicationLocalizations(manifest({ settings: [noCustomHelp] })), []);
+});
+
+test("old installable settings stay installable and mirrored, but first publication and updates are rejected", async () => {
+  const bytes = fxplug(manifest({ settings: [legacySetting] }));
+  assert.equal(inspectPackage(bytes).manifest.settings[0].key, "quality");
+  for (const shards of [[], [legacyShard("1.0.0", Buffer.from("old"), 3)]]) {
+    const catalog = catalogWith(shards);
+    const before = structuredClone(catalog);
+    await assert.rejects(stagePlugin({ plugin: PLUGIN, catalog, ...fakes(bytes) }), /localizations\.en\.title/);
+    assert.deepEqual(catalog, before);
+  }
+  const published = { ...legacyShard("1.1.0", bytes, 3), mirrors: [releaseUrl("v1.1.0")] };
+  const existing = catalogWith([published]);
+  assert.equal((await stagePlugin({ plugin: PLUGIN, catalog: existing, ...fakes(bytes) })).status, "skipped");
+  const mirrored = await stagePlugin({ plugin: PLUGIN, catalog: existing, ...fakes(bytes, { tag: "mirror" }) });
+  assert.equal(mirrored.status, "mirrored");
+  assert.equal(existing.shards.get(mirrored.path).sequence, 3);
+  const registry = await checkRegistry({
+    catalog: catalogWith([], []), head: { plugins: [PLUGIN] }, ...fakes(bytes),
+  });
+  assert.equal(registry.ok, false);
+  assert.match(registry.markdown, /localizations\.zh\.title/);
+});
+
+test("mirror CI checks new raw shards against the trusted baseline without re-admitting old settings", async () => {
+  const bytes = fxplug(manifest({ settings: [legacySetting] }));
+  const published = { ...legacyShard("1.1.0", bytes, 3), mirrors: [releaseUrl("v1.1.0")] };
+  const catalog = catalogWith([published]);
+  const download = async () => bytes;
+  const log = () => {};
+  const historical = await checkMirrors(catalog, { baseline: structuredClone(catalog), download, log });
+  assert.deepEqual(historical.errors, []);
+  const firstPublication = await checkMirrors(catalog, { baseline: catalogWith([]), download, log });
+  assert.ok(firstPublication.errors.some((error) => error.includes("localizations.en.title")));
+  const sameHashDifferentVersion = catalogWith([{ ...published, version: "1.0.0" }]);
+  const renamed = await checkMirrors(catalog, { baseline: sameHashDifferentVersion, download, log });
+  assert.ok(renamed.errors.some((error) => error.includes("localizations.en.title")));
+  const yanked = catalogWith([{ ...published, yanked: "deprecated" }]);
+  const bypass = await checkMirrors(yanked, { baseline: catalogWith([]), download, log });
+  assert.ok(bypass.errors.some((error) => error.includes("localizations.en.title")));
 });
 
 test("identity, version regression and asset count are publisher errors", async () => {

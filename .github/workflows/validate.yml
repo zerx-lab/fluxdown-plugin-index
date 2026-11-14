@@ -55,10 +55,17 @@ jobs:
         with:
           ref: ${{ env.HEAD_SHA }}
           persist-credentials: false
+      - name: Checkout exact publication baseline with complete history
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BASE_SHA }}
+          path: .baseline
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Every declared mirror must serve the exact full package
-        run: node scripts/check-mirrors.mjs
+      - name: Verify mirrors and localization of new publications against the baseline
+        run: node scripts/check-mirrors.mjs --base .baseline
       - name: Vendored admission rules are byte-identical to their npm release
         run: node scripts/sync-validator.mjs --verify

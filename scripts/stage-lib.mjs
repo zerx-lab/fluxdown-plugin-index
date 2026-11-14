@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { isRegisteredRelease, generatedDocuments } from "./index-lib.mjs";
 import { inspectPackage, compareVersions } from "./package-lib.mjs";
 import { reviewOf } from "../vendor/fluxdown-plugin-manifest.mjs";
+import { validatePublicationLocalizations } from "./publication-lib.mjs";
 
 const sha256 = (bytes) => "sha256:" + createHash("sha256").update(bytes).digest("hex");
 
@@ -77,6 +78,8 @@ export async function stagePlugin({ plugin, catalog, github, download, apply = t
   if (latest && compareVersions(manifest.version, latest) <= 0) {
     throw new Error(`manifest version ${manifest.version} 须高于已发布最高版本 ${latest}（同版本字节不可替换）`);
   }
+  const publicationErrors = validatePublicationLocalizations(manifest);
+  if (publicationErrors.length) throw new Error(publicationErrors.join("；"));
 
   const entry = {
     pluginId: plugin.id,
