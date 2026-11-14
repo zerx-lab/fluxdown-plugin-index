@@ -3,7 +3,9 @@ import { get } from "node:https";
 import { createHash } from "node:crypto";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { resolve } from "node:path";
-import { loadCatalog, validateCatalog, mirrorURL, safeMirror, MAX_PACKAGE_BYTES } from "./index-lib.mjs";
+import { loadCatalog, loadBaseline, validateCatalog, mirrorURL, safeMirror, MAX_PACKAGE_BYTES } from "./index-lib.mjs";
+import { inspectPackage } from "./package-lib.mjs";
+import { isPublishedPackage, validatePublicationLocalizations } from "./publication-lib.mjs";
 
 const TIMEOUT_MS = 45_000;
 const MAX_REDIRECTS = 5;
@@ -64,35 +66,55 @@ export async function mirrorHash(value) {
   return "sha256:" + createHash("sha256").update(await mirrorBytes(value)).digest("hex");
 }
 
-async function main() {
-  const args = process.argv.slice(2);
-  if (args.length && (args.length !== 2 || args[0] !== "--root")) {
-    throw new Error("用法: node scripts/check-mirrors.mjs [--root <目录>]");
-  }
-  const root = args.length ? resolve(args[1]) : fileURLToPath(new URL("..", import.meta.url));
-  const catalog = loadCatalog(root);
-  const offlineErrors = validateCatalog(catalog);
-  if (offlineErrors.length) throw new Error("本地索引无效：\n  - " + offlineErrors.join("\n  - "));
+/** Verify every mirror; with a trusted baseline, enforce policy only on unpublished packages. */
+export async function checkMirrors(catalog, { baseline, download = mirrorBytes, log = console.log } = {}) {
   const errors = [];
   let count = 0;
   for (const [path, entry] of catalog.shards) {
-    // Clients never install yanked versions by default and pin contentHash on every download,
-    // so a yanked version's mirrors need not keep serving (e.g. an author replaced the asset).
-    if ((entry.yanked ?? "none") !== "none") {
-      console.log(`跳过已撤回版本: ${path}（yanked: ${entry.yanked}）`);
+    const newPublication = baseline !== undefined && !isPublishedPackage(entry, baseline);
+    // New yanked entries still need admission: otherwise publishing yanked and then
+    // unyanking on the next change could bypass the publication policy.
+    if ((entry.yanked ?? "none") !== "none" && !newPublication) {
+      log(`跳过已撤回版本: ${path}（yanked: ${entry.yanked}）`);
       continue;
     }
+    let publicationChecked = !newPublication;
     for (const value of entry.mirrors) {
       count++;
       try {
-        const actual = await mirrorHash(value);
+        const bytes = await download(value);
+        const actual = "sha256:" + createHash("sha256").update(bytes).digest("hex");
         if (actual !== entry.contentHash) throw new Error(`哈希不符（期望 ${entry.contentHash}，实际 ${actual}）`);
-        console.log(`GET/hash 通过: ${path}: ${safeMirror(value)}`);
+        if (!publicationChecked) {
+          publicationChecked = true;
+          const { manifest } = inspectPackage(bytes);
+          const admissionErrors = validatePublicationLocalizations(manifest);
+          if (admissionErrors.length) throw new Error(admissionErrors.join("；"));
+        }
+        log(`GET/hash 通过: ${path}: ${safeMirror(value)}`);
       } catch (err) {
         errors.push(`${path}: ${safeMirror(value)}: ${err.message}`);
       }
     }
   }
+  return { errors, count };
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  let root = fileURLToPath(new URL("..", import.meta.url));
+  let base;
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--root" && args[i + 1]) root = resolve(args[++i]);
+    else if (args[i] === "--base" && args[i + 1]) base = resolve(args[++i]);
+    else throw new Error("用法: node scripts/check-mirrors.mjs [--root <目录>] [--base <完整基线 checkout>]");
+  }
+  const catalog = loadCatalog(root);
+  const offlineErrors = validateCatalog(catalog);
+  if (offlineErrors.length) throw new Error("本地索引无效：\n  - " + offlineErrors.join("\n  - "));
+  const { errors, count } = await checkMirrors(catalog, {
+    baseline: base === undefined ? undefined : loadBaseline(base, catalog),
+  });
   if (errors.length) throw new Error("远端镜像校验失败：\n  - " + errors.join("\n  - "));
   console.log(`远端镜像校验通过：${count} 个完整 HTTPS GET/hash（每包 ≤10 MiB）。`);
 }
