@@ -42,6 +42,11 @@
       "id": "myderr@quark-share",
       "repo": "myderr/fluxdown-quark-share",
       "tags": ["resolver", "quark", "cloud-drive", "share"]
+    },
+    {
+      "id": "gulanthys@fluxdown-douyin",
+      "repo": "gulanthys/fluxdown-douyin",
+      "tags": ["resolver", "video", "douyin", "live"]
     }
   ]
 }
