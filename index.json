@@ -1,7 +1,7 @@
 {
   "indexId": "252c2b9e-c113-42d2-b1b5-3bf8bdb01866",
-  "sequence": 32,
-  "updated": "2026-11-19T17:08:27.000Z",
+  "sequence": 33,
+  "updated": "2026-11-23T18:30:25.000Z",
   "entries": [
     {
       "pluginId": "fluxdown@ytdlp",
@@ -834,6 +834,37 @@
       ],
       "permissions": [
         "archive"
+      ],
+      "networkHosts": [],
+      "sigScheme": "none",
+      "sigstoreBundleRef": ""
+    },
+    {
+      "pluginId": "gulanthys@fluxdown-douyin",
+      "version": "0.37.0",
+      "sequence": 33,
+      "contentHash": "sha256:0badde9f07161d169a060c818e76c8c4a7d0a1d9a8f4a0c4686e9bc4473cc3f6",
+      "minAppVersion": "0.6.8",
+      "name": "抖音下载",
+      "description": "下载抖音公开视频、图文、合集、音频和字幕，支持直播录制。部分功能需要新版 FluxDown 守护进程或本地 FFmpeg。",
+      "author": "gulanthys",
+      "homepage": "https://github.com/gulanthys/fluxdown-douyin",
+      "mirrors": [
+        "https://github.com/gulanthys/fluxdown-douyin/releases/download/v0.37.0/gulanthys%40fluxdown-douyin-0.37.0.fxplug"
+      ],
+      "publishTime": "2026-11-23T18:30:25.000Z",
+      "yanked": "none",
+      "tags": [
+        "resolver",
+        "video",
+        "douyin",
+        "live"
+      ],
+      "permissions": [
+        "tasks",
+        "background",
+        "intercept",
+        "ffmpeg"
       ],
       "networkHosts": [],
       "sigScheme": "none",
