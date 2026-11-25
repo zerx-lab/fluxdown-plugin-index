@@ -1,7 +1,7 @@
 {
   "indexId": "252c2b9e-c113-42d2-b1b5-3bf8bdb01866",
-  "sequence": 33,
-  "updated": "2026-11-23T18:30:25.000Z",
+  "sequence": 34,
+  "updated": "2026-11-25T11:07:25.000Z",
   "entries": [
     {
       "pluginId": "fluxdown@ytdlp",
@@ -867,6 +867,41 @@
         "ffmpeg"
       ],
       "networkHosts": [],
+      "sigScheme": "none",
+      "sigstoreBundleRef": ""
+    },
+    {
+      "pluginId": "gulanthys@bilibili-bangumi",
+      "version": "1.2.2",
+      "sequence": 34,
+      "contentHash": "sha256:4dd1db9d7804a2c54eab237e571b7f8730604428cc2501c4da5e1fe0a9912fc9",
+      "minAppVersion": "0.6.8",
+      "name": "Bilibili",
+      "description": "Bilibili video, series, and subscription support for FluxDown.",
+      "author": "gulanthys",
+      "homepage": "https://github.com/gulanthys/fluxdown-bilibili-bangumi",
+      "mirrors": [
+        "https://github.com/gulanthys/fluxdown-bilibili-bangumi/releases/download/v1.2.2/bilibili-bangumi-1.2.2.fxplug"
+      ],
+      "publishTime": "2026-11-25T11:07:25.000Z",
+      "yanked": "none",
+      "tags": [
+        "resolver",
+        "video",
+        "bilibili",
+        "bangumi",
+        "subscription"
+      ],
+      "permissions": [
+        "auth",
+        "tasks"
+      ],
+      "networkHosts": [
+        "i0.hdslb.com",
+        "i1.hdslb.com",
+        "i2.hdslb.com",
+        "i3.hdslb.com"
+      ],
       "sigScheme": "none",
       "sigstoreBundleRef": ""
     }
