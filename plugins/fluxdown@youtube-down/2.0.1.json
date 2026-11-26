@@ -1,0 +1,28 @@
+{
+  "pluginId": "fluxdown@youtube-down",
+  "version": "2.0.1",
+  "sequence": 35,
+  "contentHash": "sha256:3db6956bfc28631743f1dee926861626081d9c1322e0c194a117fba05f619745",
+  "minAppVersion": "0.6.2",
+  "name": "YouTube 下载 YouTube Down",
+  "description": "自研解析 YouTube 视频 / Shorts / 直播回放 / 播放列表，无需 yt-dlp 等外部组件（签名求解复用 yt-dlp-ejs，在插件内运行）；直链交回引擎多段下载、音视频自动合并，下载时按清晰度弹框选择。附带浏览器扩展嗅探规则：在 YouTube 播放器上直接出现下载浮钮。",
+  "author": "fluxdown",
+  "homepage": "https://fluxdown.com",
+  "mirrors": [
+    "https://raw.githubusercontent.com/zerx-lab/fluxdown-plugin-index/99e9e8e73002dc4ad806ae98e79bc64bae7f2b53/dist/youtube-down-2.0.1.fxplug",
+    "https://cdn.jsdelivr.net/gh/zerx-lab/fluxdown-plugin-index@99e9e8e73002dc4ad806ae98e79bc64bae7f2b53/dist/youtube-down-2.0.1.fxplug"
+  ],
+  "publishTime": "2026-11-26T01:08:00.000Z",
+  "yanked": "none",
+  "tags": [
+    "resolver",
+    "video",
+    "youtube",
+    "playlist"
+  ],
+  "permissions": [
+    "browserRules"
+  ],
+  "sigScheme": "none",
+  "sigstoreBundleRef": ""
+}
